@@ -23,6 +23,9 @@ public class IAMAuthTokenRequest {
     private final String replicationGroupId;
     private final String region;
 
+    private String canonicalRequest;
+    private String stringToSign;
+
     public IAMAuthTokenRequest(String userId, String replicationGroupId, String region) {
         this.userId = userId;
         this.replicationGroupId = replicationGroupId;
@@ -32,8 +35,15 @@ public class IAMAuthTokenRequest {
     public String toSignedRequestUri(AwsCredentials credentials) {
         SdkHttpFullRequest request = getSignableRequest();
 
+        // Print raw canonical request details
+        System.out.println("DEBUG: Raw Request URI: " + request.getUri());
+        System.out.println("DEBUG: Raw Query Params: " + request.rawQueryParameters());
+
         // Sign the canonical request
         request = sign(request, credentials);
+
+        // Print signed URI
+        System.out.println("DEBUG: Signed URI: " + request.getUri());
 
         // Return the signed URI
         return request.getUri().toString().replace(REQUEST_PROTOCOL, "");
@@ -62,5 +72,17 @@ public class IAMAuthTokenRequest {
             .expirationTime(expiryInstant)
             .build();
         return signer.presign(request, signerParams);
+    }
+
+    // When building the token, set these fields:
+    // this.canonicalRequest = ...;
+    // this.stringToSign = ...;
+
+    public String getCanonicalRequest() {
+        return canonicalRequest;
+    }
+
+    public String getStringToSign() {
+        return stringToSign;
     }
 }
